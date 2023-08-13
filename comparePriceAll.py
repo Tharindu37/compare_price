@@ -1,6 +1,5 @@
 import requests
 import json
-from selenium import webdriver
 
 import sys
 sys.path.insert(0,'bs4.zip')
@@ -14,22 +13,19 @@ def compare_prices(product_laughs,product_glomark):
     #TODO: Aquire the web pages which contain product Price
     html_content_laughs = requests.get(product_laughs)
     html_content_glomark = requests.get(product_glomark)
-    driver = webdriver.Chrome()
-    driver.get(product_glomark)
-    page_source = driver.page_source
-    driver.quit()
     
     
     #TODO: LaughsSuper supermarket website provides the price in a span text.
     soup_laughs = BeautifulSoup(html_content_laughs.content, 'html.parser')
-    soup_glomark = BeautifulSoup(page_source, 'html.parser')
+    soup_glomark = BeautifulSoup(html_content_glomark.content, 'html.parser')
 
 
     
-    price_text_laughs = soup_laughs.find(id="product-price-105320").get_text()
-    price_laughs = float(price_text_laughs.split(' Rs.')[1])
-    price_text_glomark = soup_glomark.find('span',id='product-promotion-price').get_text()
-    price_glomark = float(price_text_glomark.split('Rs ')[1])
+    price_text_laughs = soup_laughs.find("span",{"class":"regular-price"}).text.strip()[3:]
+    price_laughs = float(price_text_laughs)
+    glomark_script= soup_glomark.find('script',{"type":"application/ld+json"}).text
+    glomark_data=json.loads(glomark_script)
+    price_glomark = float(glomark_data['offers'][0]['price'])
     
     product_name_laughs=soup_laughs.find(class_="product-name").get_text()
     product_name_glomark=soup_glomark.find(class_="product-title").find('h1').get_text()
